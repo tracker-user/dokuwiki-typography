@@ -1,10 +1,18 @@
 <?php
 /**
  * DokuWiki plugin Typography; Syntax typography base component
- * 
+ *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Paweł Piekarski <qentinson@gmail.com>
  * @author     Satoshi Sahara <sahara.satoshi@gmail.com>
+ *
+ * Local fork modifications vs upstream (2020-07-31):
+ *   - Bug fix: handle() accessed $params[0] on what can be an empty string
+ *     (e.g. the bare tag "<fs>" with no parameters), producing an
+ *     "Uninitialized string offset 0" warning on PHP 8. Replaced with a
+ *     substr() probe that is safe on an empty string.
+ *   - get_class($this) -> static::class; array() -> [] short syntax.
+ *   See README.md.
  */
 class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
 {
@@ -15,7 +23,7 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
 
     public function getAllowedTypes()
     {   // Allowed Mode Types
-        return array('formatting', 'substition', 'disabled');
+        return ['formatting', 'substition', 'disabled'];
     }
 
     /**
@@ -26,7 +34,7 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
     public function preConnect()
     {
         // drop 'syntax_' from class name
-        $this->mode = substr(get_class($this), 7);
+        $this->mode = substr(static::class, 7);
 
         // syntax pattern
         $this->pattern[1] = '<typo\b.*?>(?=.*?</typo>)';
@@ -80,22 +88,23 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
                 // get inline CSS parameter
                 $params = strtolower(ltrim(substr($match, strlen($markup)+1, -1)));
                 if ($this->styler->is_short_property($markup)) {
-                    $params = $markup.(($params[0] == ':') ? '' : ':').$params;
+                    // substr() probe is empty-string safe; $params[0] is not
+                    $params = $markup.((substr($params, 0, 1) === ':') ? '' : ':').$params;
                 }
 
                 // get css property:value pairs as an associative array
                 $tag_data = $this->styler->parse_inlineCSS($params);
 
-                return $data = array($state, $tag_data);
+                return $data = [$state, $tag_data];
 
             case DOKU_LEXER_UNMATCHED:
                 $handler->base($match, $state, $pos);
                 return false;
 
             case DOKU_LEXER_EXIT:
-                return $data = array($state, '');
+                return $data = [$state, ''];
         }
-        return array();
+        return [];
     }
 
     /*
@@ -118,7 +127,7 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
 
     protected function render_xhtml(Doku_Renderer $renderer, $data)
     {
-        list($state, $tag_data) = $data;
+        [$state, $tag_data] = $data;
         switch ($state) {
             case DOKU_LEXER_ENTER:
                 // load prameter parser utility

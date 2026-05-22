@@ -1,29 +1,32 @@
 <?php
 /**
  * ODT (Open Document format) export for Typography plugin
- * 
+ *
  * @license    GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author     Lars (LarsDW223)
+ *
+ * Local fork: array() -> [] short syntax; list() -> [] destructuring.
+ * See README.md.
  */
 
 if (!defined('DOKU_INC')) die();
 
 class helper_plugin_typography_odt extends DokuWiki_Plugin
 {
-    protected $closing_stack = NULL; // used in odt_render()
+    protected $closing_stack = null; // used in render()
 
     public function render(Doku_Renderer $renderer, $data)
     {
-        list($state, $tag_data) = $data;
+        [$state, $tag_data] = $data;
 
         if (is_null($this->closing_stack)) {
-            $this->closing_stack = new SplStack(); //require PHP 5 >= 5.3.0
+            $this->closing_stack = new SplStack();
         }
 
         switch ($state) {
             case DOKU_LEXER_ENTER:
                 // build inline css
-                $css = array();
+                $css = [];
                 foreach ($tag_data['declarations'] as $name => $value) {
                     $css[] = $name.':'.$value.';';
                 }
@@ -31,14 +34,14 @@ class helper_plugin_typography_odt extends DokuWiki_Plugin
 
                 if (isset($data['line-height'])) {
                     $renderer->p_close();
-                    if (method_exists ($renderer, '_odtParagraphOpenUseCSSStyle')) {
+                    if (method_exists($renderer, '_odtParagraphOpenUseCSSStyle')) {
                         $renderer->_odtParagraphOpenUseCSSStyle($style);
                     } else {
                         $renderer->_odtParagraphOpenUseCSS('p', 'style="'.$style.'"');
                     }
                     $this->closing_stack->push('p');
                 } else {
-                    if (method_exists ($renderer, '_odtSpanOpenUseCSSStyle')) {
+                    if (method_exists($renderer, '_odtSpanOpenUseCSSStyle')) {
                         $renderer->_odtSpanOpenUseCSSStyle($style);
                     } else {
                         $renderer->_odtSpanOpenUseCSS('span', 'style="'.$style.'"');
@@ -60,7 +63,8 @@ class helper_plugin_typography_odt extends DokuWiki_Plugin
                         $renderer->_odtSpanClose();
                     }
                 } catch (Exception $e) {
-                    // May be included for debugging purposes.
+                    // Stack underflow etc. — intentionally swallowed.
+                    // May be uncommented for debugging purposes:
                     //$renderer->doc .= $e->getMessage();
                 }
                 break;

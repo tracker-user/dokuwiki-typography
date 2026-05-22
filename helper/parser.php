@@ -4,6 +4,18 @@
  *
  * @license GPL 2 (http://www.gnu.org/licenses/gpl.html)
  * @author Satoshi Sahara <sahara.satoshi@gmail.com>
+ *
+ * Local fork modifications vs upstream (ssahara/dw-plugin-typography, 2020-07-31):
+ *   - Bug fix: build_attributes() used `isset($elem['classes']) ?: []`, an
+ *     Elvis-on-isset that assigns the *boolean* true (not the array) whenever
+ *     classes were already set, which then made `array_unique(true + [...])`
+ *     throw a TypeError on PHP 8. Replaced with the null-coalescing `?? []`.
+ *   - text-shadow / text-transform were registered with numeric array keys
+ *     (0 and 1) — a hack so they were recognised as valid full property names
+ *     but had no short alias. Given proper `ts` / `tt` short names, consistent
+ *     with `fs` / `fw` / etc. Full property names still work (via in_array).
+ *   - array() -> [] short syntax; explicit visibility on the constructor.
+ *   See README.md.
  */
 // must be run within Dokuwiki
 if (!defined('DOKU_INC')) die();
@@ -12,9 +24,10 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
 {
     protected $properties, $specifications;
 
-    function __construct() {
+    public function __construct()
+    {
         // allowable parameters and relevant CSS properties
-        $this->properties = array(
+        $this->properties = [
             'wf' => 'wf',           // exceptional class="wf-webfont"
             'ff' => 'font-family',
             'fc' => 'color',
@@ -27,12 +40,12 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
             'ws' => 'word-spacing',
             'va' => 'vertical-align',
             'sp' => 'white-space',
-              0  => 'text-shadow',
-              1  => 'text-transform',
-        );
+            'ts' => 'text-shadow',
+            'tt' => 'text-transform',
+        ];
 
         // valid patterns of css properties
-        $this->specifications = array(
+        $this->specifications = [
             'wf' => '/^[a-zA-Z_-]+$/',
             'ff' => '/^((\'[^,]+?\'|[^ ,]+?) *,? *)+$/',
             'fc' => '/(^\#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$)|'
@@ -60,7 +73,7 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
                 .'^(?:baseline|sub|super|top|text-top|middle|bottom|text-bottom|inherit)$/',
             'white-space' =>
                  '/^(?:normal|nowrap|pre|pre-line|pre-wrap)$/',
-        );
+        ];
     }
 
     /**
@@ -76,7 +89,7 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
     /**
      * Set allowed CSS properties
      *
-     * @param array $props  allowable CSS property name
+     * @param array $properties  allowable CSS property name
      * @return  bool
      */
     public function setAllowedProperties(array $properties)
@@ -100,18 +113,17 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
      * parse style attribute of an element
      *
      * @param   string $style  style attribute of an element
-     * @param   bool $filter   allow only CSS properties defined in $this->props
+     * @param   bool $filter   allow only CSS properties defined in $this->properties
      * @return  array  an associative array holds 'declarations' and 'classes'
      */
     public function parse_inlineCSS($style, $filter=true)
     {
-        if (empty($style)) return array();
+        if (empty($style)) return [];
 
-        $elem = array(
-          //'tag'          => 'span',
-            'declarations' => array(), // css property:value pairs of style attribute
-            'classes'      => array(), // splitted class attribute
-        );
+        $elem = [
+            'declarations' => [], // css property:value pairs of style attribute
+            'classes'      => [], // splitted class attribute
+        ];
 
         $tokens = explode(';', $style);
 
@@ -146,10 +158,10 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
 
             if ($name == 'wf') {
                 // webfont : wf: webfont_class_without_prefix;
-                $elem['classes'] += array('webfont' => 'wf-'.$value);
+                $elem['classes'] += ['webfont' => 'wf-'.$value];
             } else {
                 // declaration : CSS property-value pairs
-                $elem['declarations'] += array($name => $value);
+                $elem['declarations'] += [$name => $value];
             }
         }
 
@@ -168,7 +180,7 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
      */
     public function build_inlineCSS(array $declarations)
     {
-        $css = array();
+        $css = [];
         foreach ($declarations as $name => $value) {
             $css[] = $name.':'.$value.';';
         }
@@ -182,9 +194,9 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
      * @param   array $addClasses  class items to be added
      * @return  string  attributes of an element
      */
-    public function build_attributes(array $elem, array $addClasses=array())
+    public function build_attributes(array $elem, array $addClasses=[])
     {
-        $attr = $css = $item = array();
+        $attr = $css = $item = [];
 
         if (isset($elem['declarations'])) {
             foreach ($elem['declarations'] as $name => $value) {
@@ -194,8 +206,14 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
         }
 
         if (!empty($addClasses)) {
-            $elem['classes'] = isset($elem['classes']) ?: array();
-            $elem['classes'] = array_unique($elem['classes'] + $addClasses);
+            // Bug fix: upstream had `isset($elem['classes']) ?: []` here, which
+            // assigns boolean true (not the array) when classes already exist.
+            $elem['classes'] = $elem['classes'] ?? [];
+            // Bug fix: upstream used the `+` array operator to combine the
+            // class lists. `+` unions by key, so two numerically-indexed
+            // arrays silently drop the right-hand side's colliding elements.
+            // array_merge() actually concatenates the two lists.
+            $elem['classes'] = array_unique(array_merge($elem['classes'], $addClasses));
         }
 
         if (isset($elem['classes'])) {

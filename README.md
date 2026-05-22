@@ -1,67 +1,91 @@
-DokuWiki plugin Typography
-=============================
-Extended version from original [Typography plugin](http://treecode.pl/typography.html) developed by Paweł Piekarski.
+# Typography plugin for DokuWiki — local fork
 
-Typography plugin extends DokuWiki markup by typesetting abilities. 
-The `<typo>` markup tag specifies CSS font properties such as font face, size, weight, and color of text. 
-The parameter consists of CSS property-value pairs (`property: value;`), each pair must be separated by semicolon (`;`) however last one may be omitted. You can use abbreviated **short name** instead of full property name.
+Local fork of the [Typography plugin](https://www.dokuwiki.org/plugin:typography) (ssahara/dw-plugin-typography), tracking upstream's `2020-07-31` release. Gives Word-style inline font control via `<typo>` and the short tags `<ff>` `<fs>` `<fc>` `<bg>` `<fw>` `<wf>` `<smallcaps>`.
 
-Some specific **short name** are also available as markup tag; `<ff>` (font familiy/name), `<fs>` (size), `<fc>` (color), `<bg>` (background-color), `<fw>` (weight).  First three of them are compatible with [fontfamily](https://www.dokuwiki.org/plugin:fontfamily), [fontsize2](https://www.dokuwiki.org/plugin:fontsize2), and [fontcolor](https://www.dokuwiki.org/plugin:fontcolor) plugins respectively. 
-These short syntax are available through toolbar icons: ![fontfamily icon](https://raw.githubusercontent.com/ssahara/dw-plugin-typography/master/images/fontfamily/picker.png) ![font-size icon](https://raw.githubusercontent.com/ssahara/dw-plugin-typography/master/images/fontsize/picker.png) ![fontcolor icon](https://raw.githubusercontent.com/ssahara/dw-plugin-typography/master/images/fontcolor/picker.png)
+This fork modernizes the code, fixes two real bugs, adds two short-name aliases, makes it clean under PHP 8, and pins the version so the Extension Manager won't overwrite it.
 
-| short name | css property name | description |
-|:--         |:--                |:--          |
-|  `fc`  | color             | color of text |
-|  `bg`  | background-color  | background color of text |
-|  `fs`  | font-size         | font size of text (large or small) |
-|  `fw`  | font-weight       | weight of a font (thick or thin characters in text) |
-|  `fv`  | font-variant      | display text in a small-caps font |
-|  `ff`  | font-family       | font family for text, must be single quoted if a font name contains white-space or non-ASCII characters |
-|  `lh`  | line-height       | space between the lines |
-|  `ls`  | letter-spacing    | an extra space between characters  (in px, em, etc) |
-|  `ws`  | word-spacing      | an additional space between words (in px, em, etc) |
-|  `sp`  | white-space       | specifies how white-space is handled (preserve or collapse) |
-|  `va`  | vertical-align    | sets the vertical alignment |
-|  -     | text-transform  | controls capitalization of text (capitalize, uppercase or lowercase) |
-|  -     | text-shadow      | adds shadow to text |
-|  `wf`  | (web-font)   | specify a web font class which prefixed "wf-" (not css property) |
+## Why a fork
 
-Sometimes, inline styles are necessary when you are building a page by hand. You should however avoid them whenever possible for "semantic markup", better maintainability, and reusability. The [wrap plugin](https://www.dokuwiki.org/plugin:wrap) will provide most powerful and flexible method for specifying a class attribute.
+The upstream plugin was last released in 2020 and its dokuwiki.org page lists compatibility only up to Hogfather (2018) — four DokuWiki releases before Librarian. It still runs, but it carries latent bugs and emits PHP 8 deprecation warnings in places. Rather than depend on an unmaintained upstream, this is a local fork with the fixes applied and the version pinned.
 
+A third-party "PHP 8.2 support via rector" PR was reviewed and **not used as-is**. It was a shallow mechanical pass: it converted `array()` to `[]` (good idea) but collapsed cleanly-formatted arrays onto unreadable single lines, added several unnecessary defensive `(string)` casts, and — critically — **did not fix either of the real bugs**. The good ideas from it (array modernization, `__DIR__`, `static::class`, targeted null-safety) were applied here properly and by hand.
 
-Syntax / Usage
-------
+## What changed in the local fork
 
-### Single parameter example:
+### Bug fixes
 
-```
-<typo font-size:large;>Large</typo>, 
-<typo fs:x-large>Very large</typo>, 
-<fs:xx-large>Huge</fs>, and 
-<fs smaller>smaller</fs> size text
-```
-![Example 1](https://raw.githubusercontent.com/ssahara/dw-plugin-typography/master/example/typography-example1.png)
+**1. helper/parser.php — build_attributes() boolean-assignment bug.** Upstream had:
 
-### Multiple parameter example:
+    $elem['classes'] = isset($elem['classes']) ?: array();
 
-```
-<typo fs:larger; fw:bold; ff:serif>Bold serif</typo>, 
-<fs:large; fv:small-caps>Small-caps</fs> text
-```
-![Example 2](https://raw.githubusercontent.com/ssahara/dw-plugin-typography/master/example/typography-example2.png)
+The Elvis operator `?:` operates on the *result* of `isset()`, which is a boolean. So when `classes` was already set, this line replaced the array with the boolean `true`. The next line, `array_unique($elem['classes'] + $addClasses)`, would then attempt `true + array` — a `TypeError` on PHP 8. Fixed to the intended null-coalesce:
 
-### Nesting syntax:
+    $elem['classes'] = $elem['classes'] ?? [];
 
-```
-<ff:'Georgia', 'MS Serif', serif><fs:36px; lh:1.1>
-There is nothing either good or bad, \\ but thinking makes it so.
-</fs>\\
-<fs:smaller;>//-- William Shakespeare, “Hamlet”, Act 2 scene 2//</fs></ff>
-```
-![Example 3](https://raw.githubusercontent.com/ssahara/dw-plugin-typography/master/example/typography-example3.png)
+This path is only reached when the helper API's `build_attributes()` is called with a non-empty `$addClasses` argument (the plugin's own syntax classes never do), so it was latent — but it was still wrong, and it would bite any other plugin using the helper.
 
+The same `build_attributes()` block had a second latent bug: it combined the two class lists with the `+` array operator (`$elem['classes'] + $addClasses`). `+` unions arrays *by key*, so two numerically-indexed lists silently drop the right-hand side's colliding elements — `['a'] + ['b']` is just `['a']`. Replaced with `array_merge()`, which actually concatenates the lists.
 
-----
-Licensed under the GNU Public License (GPL) version 2
+**2. syntax/base.php — uninitialized string offset.** `handle()` did:
 
-see https://www.dokuwiki.org/plugin:typography for more information.
+    $params = strtolower(ltrim(substr($match, strlen($markup)+1, -1)));
+    if ($this->styler->is_short_property($markup)) {
+        $params = $markup.(($params[0] == ':') ? '' : ':').$params;
+    }
+
+For a bare short tag with no parameters — e.g. `<fs></fs>` — `$params` is an empty string, and `$params[0]` raises an "Uninitialized string offset 0" warning on PHP 8. Replaced the `$params[0]` access with `substr($params, 0, 1)`, which is safe on an empty string and returns `''`.
+
+### ts / tt short names
+
+Upstream registered `text-shadow` and `text-transform` in the property table with **numeric keys**:
+
+      0  => 'text-shadow',
+      1  => 'text-transform',
+
+That was a hack: it made the two full property names *recognised* (via the `in_array()` check) but gave them no short alias, unlike every other property (`fs`, `fw`, `ff`, ...). This fork gives them proper short names:
+
+    'ts' => 'text-shadow',
+    'tt' => 'text-transform',
+
+So you can now write `<typo ts:1px 1px 2px gray>` and `<typo tt:uppercase>`. The full names `text-shadow:` / `text-transform:` still work exactly as before — this only *adds* the short forms. (This is the change proposed in the upstream `ts`/`tt` pull request.)
+
+### Modernization
+
+| Change | Where |
+| --- | --- |
+| `array()` to `[]` short syntax, kept readably formatted (not collapsed) | all PHP files |
+| `list(...)` to `[...]` destructuring | base.php, odt.php, color-icon.php |
+| `get_class($this)` to `static::class` | base.php and all syntax/*.php |
+| `dirname(__FILE__)` to `__DIR__` | all syntax/*.php |
+| Explicit `public` visibility on the parser's constructor | helper/parser.php |
+
+### PHP 8 hardening of color-icon.php
+
+`images/fontcolor/color-icon.php` is a standalone endpoint (hit directly as an `<img>` URL by the colour picker). Upstream fed `$_GET['color']` straight into `str_split()` and `hexdec()`. On PHP 8 a non-string value (`?color[]=x`) causes a `TypeError`, and unvalidated input reached `hexdec()`. This fork validates the parameter strictly — it must be exactly six hexadecimal digits — before use, and makes the same-host referer check null-safe (`HTTP_HOST` may be unset; `parse_url()` may return null host). This is both PHP-8-safe and more robust than the rector PR's blind `(string)` casts.
+
+### Update suppression
+
+`plugin.info.txt` `date` set to `2077-07-31` (original day/month, year bumped to 2077). The Extension Manager's `isUpdateAvailable()` compares the installed date against upstream's as a string, so an Update is never offered — clicking it would otherwise replace this fork with the unmodified, unmaintained upstream. Matches the convention used by the other forks in this collection.
+
+## What did NOT change
+
+- All wiki syntax — `<typo>`, `<ff>`, `<fs>`, `<fc>`, `<bg>`, `<fw>`, `<wf>`, `<smallcaps>` — behaves identically. The `ts`/`tt` change only *adds* syntax.
+- The 4 language files (en, de, fr, ru), the toolbar picker images, `deleted.files`.
+- The CSS-property validation rules and the ODT export logic — unchanged.
+- `text-shadow` / `text-transform` are still passed through without a validation regex (escaped only) — same as upstream. Unchanged to keep behavior identical.
+
+## Notes on usage
+
+This plugin gives *inline, ad-hoc* font control. For consistent, maintainable styling, the [Wrap plugin](https://www.dokuwiki.org/plugin:wrap) and its semantic CSS classes are the better tool — the two are complementary: Wrap for structure/layout/alignment, Typography for inline character-level font tweaks.
+
+## Install
+
+Drop the folder into `lib/plugins/typography/`, or use Admin -> Extension Manager -> Manual Install to upload the zip.
+
+## Tested against
+
+DokuWiki `2025-05-14b "Librarian"` — PHP lint clean on all files under PHP 8.3, render tests for every tag, the `ts`/`tt` short names, the empty-tag edge case, and the `build_attributes()` bug fix, all passing under `error_reporting=E_ALL`.
+
+## License
+
+GPL 2, matching the original plugin.
