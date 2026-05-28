@@ -6,6 +6,7 @@
  * @author     Satoshi Sahara <sahara.satoshi@gmail.com>
  *
  */
+if (!defined('DOKU_INC')) die();
 
 require_once(__DIR__.'/base.php');
 

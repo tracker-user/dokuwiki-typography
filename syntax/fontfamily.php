@@ -8,6 +8,7 @@
  * provide family plugin syntax compatibility
  * @see also https://www.dokuwiki.org/plugin:fontsize2
  */
+if (!defined('DOKU_INC')) die();
 
 require_once(__DIR__.'/base.php');
 

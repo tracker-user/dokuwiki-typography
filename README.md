@@ -82,6 +82,16 @@ This plugin gives *inline, ad-hoc* font control. For consistent, maintainable st
 
 Drop the folder into `lib/plugins/typography/`, or use Admin -> Extension Manager -> Manual Install to upload the zip.
 
+## Review changes (2026-05-28)
+
+The following additional fixes were applied during a full plugin review:
+
+- **DOKU_INC guards** added to `action.php` and all `syntax/*.php` files (they were missing; the two `helper/*.php` files already had them).
+- **odt.php null safety**: `foreach ($tag_data['declarations'] …)` now uses `?? []` so it is safe when `parse_inlineCSS()` returns a result with no declarations key (e.g. a webfont-class-only tag).
+- **Lang key typo fixed**: `fs_larger_sampel` → `fs_larger_sample` in all four language files (`en`, `de`, `fr`, `ru`). The toolbar picker was emitting an empty tooltip string for the "larger" size button because the action handler referenced the correctly-spelled key.
+- **Japanese translation added**: `lang/ja/lang.php` created with all strings.
+- **Docblocks**: `@param`/`@return` annotations added to all public/protected methods in `action.php`, `syntax/base.php`, and `helper/odt.php`.
+
 ## Tested against
 
 DokuWiki `2025-05-14b "Librarian"` — PHP lint clean on all files under PHP 8.3, render tests for every tag, the `ts`/`tt` short names, the empty-tag edge case, and the `build_attributes()` bug fix, all passing under `error_reporting=E_ALL`.

@@ -8,6 +8,7 @@
  * Local fork: get_class($this) -> static::class; dirname(__FILE__) -> __DIR__;
  * array() -> [] short syntax. See README.md.
  */
+if (!defined('DOKU_INC')) die();
 
 require_once(__DIR__.'/base.php');
 

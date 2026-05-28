@@ -8,6 +8,7 @@
  * provide fontcolor plugin syntax compatibility
  * @see also https://www.dokuwiki.org/plugin:fontcolor
  */
+if (!defined('DOKU_INC')) die();
 
 require_once(__DIR__.'/base.php');
 

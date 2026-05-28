@@ -9,10 +9,15 @@
  * mechanical rector pass which collapses arrays onto single lines).
  * See README.md.
  */
+if (!defined('DOKU_INC')) die();
+
 class action_plugin_typography extends DokuWiki_Action_Plugin
 {
     /**
-     * register the event handlers
+     * Register event handlers for toolbar injection
+     *
+     * @param Doku_Event_Handler $controller
+     * @return void
      */
     public function register(Doku_Event_Handler $controller)
     {
@@ -30,6 +35,10 @@ class action_plugin_typography extends DokuWiki_Action_Plugin
 
     /**
      * Adds FontColor toolbar button
+     *
+     * @param Doku_Event $event
+     * @param mixed      $param
+     * @return void
      * @see https://www.dokuwiki.org/plugin:fontcolor
      */
     public function fontColorToolbar(Doku_Event $event, $param)
@@ -88,6 +97,10 @@ class action_plugin_typography extends DokuWiki_Action_Plugin
 
     /**
      * Adds FontFamily toolbar button
+     *
+     * @param Doku_Event $event
+     * @param mixed      $param
+     * @return void
      * @see https://www.dokuwiki.org/plugin:fontfamily
      */
     public function fontFamilyToolbar(Doku_Event $event, $param)
@@ -119,6 +132,10 @@ class action_plugin_typography extends DokuWiki_Action_Plugin
 
     /**
      * Adds FontSize toolbar button
+     *
+     * @param Doku_Event $event
+     * @param mixed      $param
+     * @return void
      * @see https://www.dokuwiki.org/plugin:fontsize2
      */
     public function fontSizeToolbar(Doku_Event $event, $param)

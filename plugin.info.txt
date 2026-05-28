@@ -2,6 +2,6 @@ base   typography
 author Paweł Piekarski, Satoshi Sahara, TrackerUser
 email  sahara.satoshi@gmail.com
 date   2077-07-31
-name   Typography plugin
+name   Typography
 desc   Enable typesetting capabilities with CSS font properties such as font face, size, weight, and color of text (local fork — Update suppressed)
 url    https://github.com/tracker-user/dokuwiki-typography

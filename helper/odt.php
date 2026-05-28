@@ -15,6 +15,13 @@ class helper_plugin_typography_odt extends DokuWiki_Plugin
 {
     protected $closing_stack = null; // used in render()
 
+    /**
+     * Render ODT output for a typography span/paragraph
+     *
+     * @param Doku_Renderer $renderer ODT renderer instance
+     * @param array         $data     data returned by the syntax handle() method
+     * @return bool
+     */
     public function render(Doku_Renderer $renderer, $data)
     {
         [$state, $tag_data] = $data;
@@ -27,7 +34,7 @@ class helper_plugin_typography_odt extends DokuWiki_Plugin
             case DOKU_LEXER_ENTER:
                 // build inline css
                 $css = [];
-                foreach ($tag_data['declarations'] as $name => $value) {
+                foreach (($tag_data['declarations'] ?? []) as $name => $value) {
                     $css[] = $name.':'.$value.';';
                 }
                 $style = implode(' ', $css);

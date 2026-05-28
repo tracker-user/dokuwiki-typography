@@ -14,13 +14,25 @@
  *   - get_class($this) -> static::class; array() -> [] short syntax.
  *   See README.md.
  */
+if (!defined('DOKU_INC')) die();
+
 class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
 {
+    /**
+     * Return the syntax type for this plugin
+     *
+     * @return string
+     */
     public function getType()
     {   // Syntax Type
         return 'formatting';
     }
 
+    /**
+     * Return the allowed nested mode types
+     *
+     * @return string[]
+     */
     public function getAllowedTypes()
     {   // Allowed Mode Types
         return ['formatting', 'substition', 'disabled'];
@@ -31,6 +43,11 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
      */
     protected $mode, $pattern;
 
+    /**
+     * Initialise $mode and $pattern before lexer connection
+     *
+     * @return void
+     */
     public function preConnect()
     {
         // drop 'syntax_' from class name
@@ -41,22 +58,43 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
         $this->pattern[4] = '</typo>';
     }
 
+    /**
+     * Add entry pattern to lexer for the given mode
+     *
+     * @param string $mode
+     * @return void
+     */
     public function connectTo($mode)
     {
         $this->Lexer->addEntryPattern($this->pattern[1], $mode, $this->mode);
     }
 
+    /**
+     * Add exit pattern to lexer
+     *
+     * @return void
+     */
     public function postConnect()
     {
         $this->Lexer->addExitPattern($this->pattern[4], $this->mode);
     }
 
+    /**
+     * Return sort number (priority) for this syntax mode
+     *
+     * @return int
+     */
     public function getSort()
     {   // sort number used to determine priority of this mode
         return 67; // = Doku_Parser_Mode_formatting:strong -3
     }
 
-    // plugin accepts its own entry syntax
+    /**
+     * Whether this mode accepts the given nested mode (also accepts itself)
+     *
+     * @param string $mode
+     * @return bool
+     */
     public function accepts($mode)
     {
         if ($mode == $this->mode) return true;
@@ -70,8 +108,14 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
     protected $styler = null;
 
 
-    /*
-     * Handle the match
+    /**
+     * Handle a lexer match: parse tag parameters into CSS property/value pairs
+     *
+     * @param string       $match   matched text
+     * @param int          $state   lexer state (DOKU_LEXER_ENTER/UNMATCHED/EXIT)
+     * @param int          $pos     byte offset in source
+     * @param Doku_Handler $handler parser handler
+     * @return array|false parsed data array, or false for UNMATCHED (passed to base handler)
      */
     public function handle($match, $state, $pos, Doku_Handler $handler)
     {
@@ -107,8 +151,13 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
         return [];
     }
 
-    /*
-     * Create output
+    /**
+     * Render output for the given format
+     *
+     * @param string        $format   output format ('xhtml', 'odt', …)
+     * @param Doku_Renderer $renderer renderer instance
+     * @param array         $data     data returned by handle()
+     * @return bool true on success, false if format unsupported
      */
     public function render($format, Doku_Renderer $renderer, $data)
     {
@@ -125,6 +174,13 @@ class syntax_plugin_typography_base extends DokuWiki_Syntax_Plugin
         }
     }
 
+    /**
+     * Render XHTML output: emit opening/closing <span> with inline CSS
+     *
+     * @param Doku_Renderer $renderer
+     * @param array         $data
+     * @return bool
+     */
     protected function render_xhtml(Doku_Renderer $renderer, $data)
     {
         [$state, $tag_data] = $data;
