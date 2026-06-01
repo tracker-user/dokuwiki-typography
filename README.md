@@ -92,6 +92,16 @@ The following additional fixes were applied during a full plugin review:
 - **Japanese translation added**: `lang/ja/lang.php` created with all strings.
 - **Docblocks**: `@param`/`@return` annotations added to all public/protected methods in `action.php`, `syntax/base.php`, and `helper/odt.php`.
 
+## Review changes (2026-06-01)
+
+Three bugs found by re-running the full review checklist against the live container:
+
+**1. helper/parser.php — fc/bg/ff validation regexes were dead code.** The `$specifications` table used to key the `color`, `background-color`, and `font-family` validators by their *short* names (`fc`, `bg`, `ff`). But `parse_inlineCSS()` resolves the short name to its full CSS property name *before* looking it up in `$specifications`, so those three regexes were never reached — any value (e.g. `fc:99`, `bg:bogus`) was accepted. Confirmed empirically by bootstrapping the real helper in the container. Fixed by re-keying to `'color'`, `'background-color'`, and `'font-family'`. Behavior change: values that previously slipped through the intended validator are now rejected. All first-party values produced by the toolbar (hex `#rrggbb`, named families `serif`/`sans-serif`) still pass. `'wf'` is unaffected — its short and resolved names are the same.
+
+**2. helper/odt.php — line-height paragraph branch was dead.** The ODT renderer's `DOKU_LEXER_ENTER` handler tested `isset($data['line-height'])`, but `$data` is the two-element numeric array `[$state, $tag_data]` — that string key can never exist there. The correct variable is `$tag_data['declarations']['line-height']`. Effect: `<typo lh:…>` in ODT export always rendered as a span (line-height silently ignored) instead of the intended styled paragraph. Fixed to `isset($tag_data['declarations']['line-height'])`.
+
+**3. lang — ff_*_sample keys missing from all language files.** `action.php` calls `getLang('ff_serif_sample')` and `getLang('ff_sans-serif_sample')` for the font-family toolbar picker's preview text, but these keys were defined in no language file (same pattern as the `fs_larger_sampel` typo fixed in the 2026-05-28 pass). Added to all five language files (`en`, `de`, `fr`, `ru`, `ja`).
+
 ## Tested against
 
 DokuWiki `2025-05-14b "Librarian"` — PHP lint clean on all files under PHP 8.3, render tests for every tag, the `ts`/`tt` short names, the empty-tag edge case, and the `build_attributes()` bug fix, all passing under `error_reporting=E_ALL`.

@@ -8,8 +8,10 @@ $lang['fc_picker']  = 'Schrift-Farbe';
 $lang['ff_picker']  = 'Schrift-Familie';
 $lang['fs_picker']  = 'Schrift-Größe';
 
-$lang['ff_serif']          = 'Serif';
-$lang['ff_sans-serif']     = 'Sans-serif';
+$lang['ff_serif']               = 'Serif';
+$lang['ff_serif_sample']        = 'Beispieltext mit Serifen';
+$lang['ff_sans-serif']          = 'Sans-serif';
+$lang['ff_sans-serif_sample']   = 'Beispieltext ohne Serifen';
 
 $lang['fs_xxs']            = 'Winziger Text';
 $lang['fs_xxs_sample']     = 'Dies ist ein winziger Text';

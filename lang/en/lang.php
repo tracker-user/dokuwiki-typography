@@ -8,8 +8,10 @@ $lang['fc_picker']  = 'Font color';
 $lang['ff_picker']  = 'Font family';
 $lang['fs_picker']  = 'Font size';
 
-$lang['ff_serif']          = 'Serif';
-$lang['ff_sans-serif']     = 'Sans-serif';
+$lang['ff_serif']               = 'Serif';
+$lang['ff_serif_sample']        = 'Serif font sample';
+$lang['ff_sans-serif']          = 'Sans-serif';
+$lang['ff_sans-serif_sample']   = 'Sans-serif font sample';
 
 $lang['fs_xxs']            = 'Tiny Text';
 $lang['fs_xxs_sample']     = 'This is a tiny text';

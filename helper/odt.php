@@ -39,7 +39,7 @@ class helper_plugin_typography_odt extends DokuWiki_Plugin
                 }
                 $style = implode(' ', $css);
 
-                if (isset($data['line-height'])) {
+                if (isset($tag_data['declarations']['line-height'])) {
                     $renderer->p_close();
                     if (method_exists($renderer, '_odtParagraphOpenUseCSSStyle')) {
                         $renderer->_odtParagraphOpenUseCSSStyle($style);

@@ -8,8 +8,10 @@ $lang['fc_picker']  = 'Цвет текста';
 $lang['ff_picker']  = 'Шрифт';
 $lang['fs_picker']  = 'Размер текста';
 
-$lang['ff_serif']          = 'Засечки';
-$lang['ff_sans-serif']     = 'Гротеск';
+$lang['ff_serif']               = 'Засечки';
+$lang['ff_serif_sample']        = 'Пример текста с засечками';
+$lang['ff_sans-serif']          = 'Гротеск';
+$lang['ff_sans-serif_sample']   = 'Пример текста без засечек';
 
 $lang['fs_xxs']            = 'Крохотный';
 $lang['fs_xxs_sample']     = 'Это крохотный текст';

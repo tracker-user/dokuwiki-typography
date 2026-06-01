@@ -8,8 +8,10 @@ $lang['fc_picker']  = '文字色';
 $lang['ff_picker']  = 'フォントファミリー';
 $lang['fs_picker']  = 'フォントサイズ';
 
-$lang['ff_serif']          = 'セリフ体';
-$lang['ff_sans-serif']     = 'サンセリフ体';
+$lang['ff_serif']               = 'セリフ体';
+$lang['ff_serif_sample']        = 'セリフ体のサンプルテキスト';
+$lang['ff_sans-serif']          = 'サンセリフ体';
+$lang['ff_sans-serif_sample']   = 'サンセリフ体のサンプルテキスト';
 
 $lang['fs_xxs']            = '極小テキスト';
 $lang['fs_xxs_sample']     = 'これは極小テキストです';

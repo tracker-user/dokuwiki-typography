@@ -45,16 +45,22 @@ class helper_plugin_typography_parser extends DokuWiki_Plugin
         ];
 
         // valid patterns of css properties
+        // Keys MUST match the *resolved* CSS property name (the value side of
+        // $this->properties), not the short alias. The lookup in parse_inlineCSS()
+        // happens after resolution, so keying by short name (e.g. 'fc') means
+        // the regex is never reached — the resolved name ('color') is what gets
+        // looked up. 'wf' is the exception: its short and resolved names are
+        // identical, so it still works either way.
         $this->specifications = [
-            'wf' => '/^[a-zA-Z_-]+$/',
-            'ff' => '/^((\'[^,]+?\'|[^ ,]+?) *,? *)+$/',
-            'fc' => '/(^\#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$)|'
-                   .'(^rgb\((\d{1,3}%?,){2}\d{1,3}%?\)$)|'
-                   .'(^[a-zA-Z]+$)/',
-            'bg' => '/(^\#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$)|'
-                   .'(^rgb\((\d{1,3}%?,){2}\d{1,3}%?\)$)|'
-                   .'(^rgba\((\d{1,3}%?,){3}[\d.]+\)$)|'
-                   .'(^[a-zA-Z]+$)/',
+            'wf'               => '/^[a-zA-Z_-]+$/',
+            'font-family'      => '/^((\'[^,]+?\'|[^ ,]+?) *,? *)+$/',
+            'color'            => '/(^\#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$)|'
+                                 .'(^rgb\((\d{1,3}%?,){2}\d{1,3}%?\)$)|'
+                                 .'(^[a-zA-Z]+$)/',
+            'background-color' => '/(^\#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$)|'
+                                 .'(^rgb\((\d{1,3}%?,){2}\d{1,3}%?\)$)|'
+                                 .'(^rgba\((\d{1,3}%?,){3}[\d.]+\)$)|'
+                                 .'(^[a-zA-Z]+$)/',
             'font-size' =>
                  '/^(?:\d+(?:\.\d+)?(?:px|em|ex|pt|%)'
                 .'|(?:x{1,2}-)?small|medium|(?:x{1,2}-)?large|smaller|larger)$/',

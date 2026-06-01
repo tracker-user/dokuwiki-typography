@@ -8,8 +8,10 @@ $lang['fc_picker']  = 'Couleur de police';
 $lang['ff_picker']  = 'Famille de police';
 $lang['fs_picker']  = 'Taille de police';
 
-$lang['ff_serif']          = 'Serif';
-$lang['ff_sans-serif']     = 'Sans-serif';
+$lang['ff_serif']               = 'Serif';
+$lang['ff_serif_sample']        = 'Exemple de police avec empattements';
+$lang['ff_sans-serif']          = 'Sans-serif';
+$lang['ff_sans-serif_sample']   = 'Exemple de police sans empattements';
 
 $lang['fs_xxs']            = 'Texte en minuscule ';
 $lang['fs_xxs_sample']     = 'Ceci est un texte écrit minuscule';
